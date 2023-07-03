@@ -24,7 +24,7 @@ app.post('/auth', async (req, res) => {
     const createdUser = await User.create({userName});
     jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err, token)=>{
         if(err) throw err;
-        res.cookie('token', token).status(201).json('ok');
+        res.cookie('token', token).status(201).json(createdUser);
     });
 });
 
