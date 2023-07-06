@@ -15,7 +15,7 @@ const app = express();
 
 app.use(cors({
     credentials: true,
-    origin: '*',
+    origin: 'https://bazikalo.vercel.app/',
   }));
 app.use(express.json());
 app.use(express.static("public"));
