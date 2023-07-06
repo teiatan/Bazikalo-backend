@@ -15,10 +15,11 @@ const app = express();
 
 app.use(cors({
     credentials: true,
-    origin: 'http://127.0.0.1:5173',
+    origin: 'http://127.0.0.1:5173' /* 'https://bazikalo.vercel.app/' */,
   }));
 app.use(express.json());
 app.use(express.static("public"));
+app.options('*', cors());
 
 app.post('/auth', async (req, res) => {
     const {userName} = req.body;
@@ -29,4 +30,15 @@ app.post('/auth', async (req, res) => {
     });
 });
 
-app.listen(4000);
+const server = app.listen(4000);
+
+const wss = new ws.WebSocketServer({server});
+wss.on('connection', (connection, req) => {
+    console.log('front connected');
+    console.log(req.headers);
+    connection.send('hello');
+    const cookies = req.headers.cookie;
+    if(cookies)  {
+        const tokenCookieString = cookies.split(';').find(string => string.startsWith('token='))
+    }
+});
