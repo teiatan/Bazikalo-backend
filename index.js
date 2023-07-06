@@ -30,6 +30,15 @@ app.post('/auth', async (req, res) => {
     });
 });
 
+app.put('/user/:userId', async (req, res) => {
+    const {userId} = req.params;
+    const result = await User.findByIdAndUpdate(userId, req.body, {new: true});
+    if(!result) {
+        throw new Error('User is not found');
+      };
+    res.json(result);
+});
+
 const server = app.listen(4000);
 
 const wss = new ws.WebSocketServer({server});
