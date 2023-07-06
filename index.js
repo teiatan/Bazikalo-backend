@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const ws = require('ws');
 
 require('dotenv').config();
 
@@ -24,7 +25,7 @@ app.post('/auth', async (req, res) => {
     const createdUser = await User.create({userName});
     jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err, token)=>{
         if(err) throw err;
-        res.cookie('token', token).status(201).json(createdUser);
+        res.cookie('token', token, {sameSite:'none', secure:true}).status(201).json(createdUser);
     });
 });
 
