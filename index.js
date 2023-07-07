@@ -72,6 +72,7 @@ const io = new Server(httpServer, {
         origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
       }
 });
+io.options('*', cors());
 
 io.on("connection", (socket) => {
     socket.on("messages", message => {
