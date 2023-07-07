@@ -62,15 +62,12 @@ const server = app.listen(4000);
 // });
 
 const { Server } = require("socket.io");
-const { createServer } = require("http");
-
-const httpServer = createServer();
 
 const io = new Server(server, {
-    cors: {
-        credentials: true,
-        origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
-      }
+    // cors: {
+    //     credentials: true,
+    //     origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
+    //   }
 });
 
 io.on("connection", (socket) => {
@@ -79,4 +76,3 @@ io.on("connection", (socket) => {
     })
 });
 
-httpServer.listen(3001);
