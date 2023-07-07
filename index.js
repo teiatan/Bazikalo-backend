@@ -68,8 +68,9 @@ const httpServer = createServer();
 
 const io = new Server(httpServer, {
     cors: {
-        origin: "*"
-    }
+        credentials: true,
+        origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
+      }
 });
 
 io.on("connection", (socket) => {
