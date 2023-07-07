@@ -21,13 +21,18 @@ app.use(express.json());
 app.use(express.static("public"));
 app.options('*', cors());
 
+app.get('/test', (req,res) => {
+    res.json('test ok');
+  });
+
 app.post('/auth', async (req, res) => {
     const {userName} = req.body;
     const createdUser = await User.create({userName});
     jwt.sign({createdUser}, jwtSecret, {}, (err, token)=>{
         if(err) throw err;
-        res.cookie('token', token, {sameSite:'none', secure:true}).status(201).json(createdUser);
+        res.cookie('token', token, {sameSite:'none', secure:true}).status(201);
     });
+    res.json(createdUser);
 });
 
 app.put('/user/:userId', async (req, res) => {
@@ -65,7 +70,7 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
       }
 });
 
