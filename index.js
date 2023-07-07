@@ -24,7 +24,7 @@ app.options('*', cors());
 app.post('/auth', async (req, res) => {
     const {userName} = req.body;
     const createdUser = await User.create({userName});
-    jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err, token)=>{
+    jwt.sign({createdUser}, jwtSecret, {}, (err, token)=>{
         if(err) throw err;
         res.cookie('token', token, {sameSite:'none', secure:true}).status(201).json(createdUser);
     });
@@ -41,13 +41,41 @@ app.put('/user/:userId', async (req, res) => {
 
 const server = app.listen(4000);
 
-const wss = new ws.WebSocketServer({server});
-wss.on('connection', (connection, req) => {
-    console.log('front connected');
-    console.log(req.headers);
-    connection.send('hello');
-    const cookies = req.headers.cookie;
-    if(cookies)  {
-        const tokenCookieString = cookies.split(';').find(string => string.startsWith('token='))
+// const wss = new ws.WebSocketServer({server});
+// wss.on('connection', (connection, req) => {
+//     console.log('front connected');
+//     connection.send('hello');
+//     const cookies = req.headers.cookie;
+//     if(cookies)  {
+//         const tokenCookieString = cookies.split(';').find(string => string.startsWith('token='));
+//         if (tokenCookieString) {
+//             const token = tokenCookieString.split('=')[1];
+//             if (token) {
+//                 jwt.verify(token, jwtSecret, {}, (err, userData)=>{
+//                     if (err) throw err;
+//                     // connection.userId = userData.createdUser._id;
+//                     // connection.userData = userData.createdUser;
+//                 })
+//             }
+//         }
+//     }
+// });
+
+const { Server } = require("socket.io");
+const { createServer } = require("http");
+
+const httpServer = createServer();
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*"
     }
 });
+
+io.on("connection", (socket) => {
+    socket.on("messages", message => {
+        socket.emit("messages", message);
+    })
+});
+
+httpServer.listen(3001);
