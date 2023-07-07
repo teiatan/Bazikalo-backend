@@ -75,7 +75,7 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
     socket.on("messages", message => {
-        socket.emit("messages", message);
-    })
+        io.emit("messages", message);
+    });
 });
 
