@@ -74,8 +74,32 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+
+    socket.on("userConnect", async (user) => {
+        socket.broadcast.emit('userConnect', user)
+        const userInDataBase = await User.findById(user._id);
+        if(!userInDataBase) {
+            console.log('create');
+            User.create(user);
+        } else {
+            User.findByIdAndUpdate(user._id, user, {new: true});
+        }
+    });
+
     socket.on("messages", message => {
         io.emit("messages", message);
+    });
+
+    socket.on("userDisconnect", async (user) => {
+        socket.broadcast.emit('userDisconnect', user)
+        const userInDataBase = await User.findById(user._id);
+        if(userInDataBase) {
+            console.log("present");
+            const result = await User.findOneAndRemove({_id: user._id});
+            console.log(result);
+        }
+        const userrInDataBase = await User.findById(user._id);
+        // console.log(userrInDataBase);
     });
 });
 

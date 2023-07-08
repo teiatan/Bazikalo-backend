@@ -1,14 +1,15 @@
 const mongoose = require('mongoose');
 
-const UserSchems = new mongoose.Schema({
-    userName: String,
+const RoomSchema = new mongoose.Schema({
+    name: String,
     colors: {
         text: {type: String, default: '#000000'},
         background: {type: String, default: '#ffffff'}
     },
-    rooms: {type: Array, default: ['1408']}
+    activeUsers: Array,
+    type: String
 }, {timestamps:true});
 
-const UserModal = mongoose.model('User', UserSchems);
+const RoomModal = mongoose.model('Room', RoomSchema);
 
-module.exports = UserModal;
+module.exports = RoomModal;
