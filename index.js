@@ -50,6 +50,30 @@ app.post('/rooms', async (req, res) => {
     const userRooms = await User.findById(newRoom.activeUsers[0]);
     const result = await User.findByIdAndUpdate(newRoom.activeUsers[0], {rooms: [...userRooms.rooms, createdRoom._id]}, {new: true});
 })
+
+app.put('/rooms/:roomId', async (req, res) => {
+    const {roomId} = req.params;
+    const room = await Room.findById(roomId);
+    if(!room) {
+        res.json("bad request, wrong room id").status(400);
+        return
+    };
+    const activeUsers = room.activeUsers.filter(id => id!==req.params);
+    await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
+    if (room.activeUsers.length < 2 && roomId !== '64a99b9d5dca528b9636b96b') {
+        await Room.findOneAndRemove({_id: roomId})
+    }
+    const {userId} = req.body;
+    const user = await User.findById(userId);
+    if(!user) {
+        res.json("bad request, wrong user id").status(400);
+        return;
+    }
+    const newRooms = user.rooms.filter(room => room !== roomId);
+    await User.findByIdAndUpdate(userId, {newRooms}, {new: true});
+    res.json('room successfully left').status(201);
+});
+
 const server = app.listen(4000);
 
 
@@ -98,9 +122,9 @@ io.on("connection", (socket) => {
                 const room = await Room.findById(roomId);
                 if(!room) {return};
                 const activeUsers = room.activeUsers.filter(id => id!==user._id);
-                const result = await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
-                if (room.activeUsers.length < 2 && roomId._id !== '64a99b9d5dca528b9636b96b') {
-                   const result = await Room.findOneAndRemove({_id: roomId})
+                await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
+                if (room.activeUsers.length < 2 && roomId !== '64a99b9d5dca528b9636b96b') {
+                   await Room.findOneAndRemove({_id: roomId})
                 }
             })
         }
