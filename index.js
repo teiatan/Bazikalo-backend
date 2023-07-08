@@ -1,9 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('./models/User');
+const Room = require('./models/Room');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const ws = require('ws');
 
 require('dotenv').config();
 
@@ -43,7 +43,66 @@ app.put('/user/:userId', async (req, res) => {
     res.json(result);
 });
 
+app.post('/rooms', async (req, res) => {
+    const {newRoom} = req.body;
+    const createdRoom = await Room.create(newRoom);
+    res.json(createdRoom).status(201);
+})
 const server = app.listen(4000);
+
+
+const { Server } = require("socket.io");
+
+const io = new Server(server, {
+    cors: {
+        origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
+      }
+});
+
+io.on("connection", (socket) => {
+
+    socket.on("userConnect", async (user) => {
+        socket.broadcast.emit('userConnect', user)
+        const userInDataBase = await User.findById(user._id);
+        if(!userInDataBase) {
+            User.create(user);
+        } else {
+            User.findByIdAndUpdate(user._id, user, {new: true});
+        }
+    });
+
+    socket.on("messages", message => {
+        io.emit("messages", message);
+    });
+
+    socket.on("userDisconnect", async (user) => {
+        socket.broadcast.emit('userDisconnect', user)
+        const userInDataBase = await User.findById(user._id);
+        if(userInDataBase) {
+            User.findOneAndRemove({_id: user._id});
+            userInDataBase.rooms.forEach(async (roomId) => {
+                console.log(roomId);
+                // const room = await Room.findById(roomId);
+                // if (room.activeUsers.length <= 1) {
+                //    await Room.findOneAndRemove({_id: roomId})
+                // }
+            })
+        }
+    });
+
+    User.watch().on('change', async () => {
+        const onlineUsers = await User.find();
+        io.emit("onlineUsers", onlineUsers);
+    });
+
+    Room.watch().on('change', async () => {
+        const allRooms = await Room.find();
+        io.emit("allRooms", allRooms);
+    });
+});
+
+
+
 
 // const wss = new ws.WebSocketServer({server});
 // wss.on('connection', (connection, req) => {
@@ -64,47 +123,3 @@ const server = app.listen(4000);
 //         }
 //     }
 // });
-
-const { Server } = require("socket.io");
-
-const io = new Server(server, {
-    cors: {
-        origin: ['http://127.0.0.1:5173', 'https://bazikalo.vercel.app'],
-      }
-});
-
-io.on("connection", (socket) => {
-
-    socket.on("userConnect", async (user) => {
-        socket.broadcast.emit('userConnect', user)
-        const userInDataBase = await User.findById(user._id);
-        if(!userInDataBase) {
-            console.log('create');
-            User.create(user);
-        } else {
-            User.findByIdAndUpdate(user._id, user, {new: true});
-        }
-    });
-
-    socket.on("messages", message => {
-        io.emit("messages", message);
-    });
-
-    socket.on("userDisconnect", async (user) => {
-        socket.broadcast.emit('userDisconnect', user)
-        const userInDataBase = await User.findById(user._id);
-        if(userInDataBase) {
-            const result = await User.findOneAndRemove({_id: user._id});
-        }
-        const userrInDataBase = await User.findById(user._id);
-        // console.log(userrInDataBase);
-    });
-
-    User.watch().on('change', async () => {
-        const onlineUsers = await User.find();
-        io.emit("onlineUsers", onlineUsers);
-    });
-});
-
-
-
