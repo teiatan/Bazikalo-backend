@@ -6,7 +6,7 @@ const UserSchems = new mongoose.Schema({
         text: {type: String, default: '#000000'},
         background: {type: String, default: '#ffffff'}
     },
-    rooms: {type: Array, default: ['1408']}
+    rooms: {type: Array, default: ['64a99b9d5dca528b9636b96b']}
 }, {timestamps:true});
 
 const UserModal = mongoose.model('User', UserSchems);

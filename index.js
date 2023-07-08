@@ -62,6 +62,9 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
 
     socket.on("userConnect", async (user) => {
+        if(user._id === '') {
+            return;
+        }
         socket.broadcast.emit('userConnect', user)
         const userInDataBase = await User.findById(user._id);
         if(!userInDataBase) {
@@ -69,6 +72,12 @@ io.on("connection", (socket) => {
         } else {
             User.findByIdAndUpdate(user._id, user, {new: true});
         }
+        const generalRoom = await Room.findById('64a99b9d5dca528b9636b96b');
+        if(generalRoom.activeUsers.includes(user._id)){
+            return;
+        }
+        const activeUsers = [...generalRoom.activeUsers, user._id];
+        await Room.findByIdAndUpdate('64a99b9d5dca528b9636b96b', {activeUsers}, {new: true});
     });
 
     socket.on("messages", message => {
@@ -76,16 +85,22 @@ io.on("connection", (socket) => {
     });
 
     socket.on("userDisconnect", async (user) => {
+        if(user._id === '') {
+            return;
+        }
         socket.broadcast.emit('userDisconnect', user)
         const userInDataBase = await User.findById(user._id);
         if(userInDataBase) {
             User.findOneAndRemove({_id: user._id});
             userInDataBase.rooms.forEach(async (roomId) => {
-                console.log(roomId);
-                // const room = await Room.findById(roomId);
+                
+                const room = await Room.findById(roomId);
                 // if (room.activeUsers.length <= 1) {
                 //    await Room.findOneAndRemove({_id: roomId})
                 // }
+                const activeUsers = room.activeUsers.filter(id => id!==user._id);
+                const result = await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
+
             })
         }
     });
