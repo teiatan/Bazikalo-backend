@@ -94,12 +94,17 @@ io.on("connection", (socket) => {
         socket.broadcast.emit('userDisconnect', user)
         const userInDataBase = await User.findById(user._id);
         if(userInDataBase) {
-            console.log("present");
             const result = await User.findOneAndRemove({_id: user._id});
-            console.log(result);
         }
         const userrInDataBase = await User.findById(user._id);
         // console.log(userrInDataBase);
     });
+
+    User.watch().on('change', async () => {
+        const onlineUsers = await User.find();
+        io.emit("onlineUsers", onlineUsers);
+    });
 });
+
+
 
