@@ -47,6 +47,8 @@ app.post('/rooms', async (req, res) => {
     const {newRoom} = req.body;
     const createdRoom = await Room.create(newRoom);
     res.json(createdRoom).status(201);
+    const userRooms = await User.findById(newRoom.activeUsers[0]);
+    const result = await User.findByIdAndUpdate(newRoom.activeUsers[0], {rooms: [...userRooms.rooms, createdRoom._id]}, {new: true});
 })
 const server = app.listen(4000);
 
@@ -91,16 +93,15 @@ io.on("connection", (socket) => {
         socket.broadcast.emit('userDisconnect', user)
         const userInDataBase = await User.findById(user._id);
         if(userInDataBase) {
-            User.findOneAndRemove({_id: user._id});
-            userInDataBase.rooms.forEach(async (roomId) => {
-                
+            await User.findByIdAndDelete(userInDataBase._id);
+            userInDataBase.rooms.forEach(async (roomId) => {               
                 const room = await Room.findById(roomId);
-                // if (room.activeUsers.length <= 1) {
-                //    await Room.findOneAndRemove({_id: roomId})
-                // }
+                if(!room) {return};
                 const activeUsers = room.activeUsers.filter(id => id!==user._id);
                 const result = await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
-
+                if (room.activeUsers.length < 2 && roomId._id !== '64a99b9d5dca528b9636b96b') {
+                   const result = await Room.findOneAndRemove({_id: roomId})
+                }
             })
         }
     });
