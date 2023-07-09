@@ -48,13 +48,19 @@ app.post('/rooms', async (req, res) => {
     const createdRoom = await Room.create(newRoom);
     const roomId = createdRoom._id.toString();
     res.json(createdRoom).status(201);
-    newRoom.activeUsers.forEach(async (userId, index) => {
-        const user = await User.findById(userId);
-        if(!user) {return}
-        const result = await User.findByIdAndUpdate(newRoom.activeUsers[0], {rooms: [...user.rooms, roomId]}, {new: true});
+    newRoom.activeUsers.forEach(async (userId) => {
+        try {
+            const user = await User.findById(userId);
+            if(user) {
+                const result = await User.findByIdAndUpdate(userId, {rooms: [...user.rooms, roomId]}, {new: true});
+            }
+        } catch {
+            console.log('error id');
+        }
+        
     })
 })
-
+ 
 // покинути кімнату
 app.put('/rooms/:roomId', async (req, res) => {
     const {roomId} = req.params;
