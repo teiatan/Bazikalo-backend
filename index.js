@@ -46,32 +46,60 @@ app.put('/user/:userId', async (req, res) => {
 app.post('/rooms', async (req, res) => {
     const {newRoom} = req.body;
     const createdRoom = await Room.create(newRoom);
+    const roomId = createdRoom._id.toString();
     res.json(createdRoom).status(201);
-    const userRooms = await User.findById(newRoom.activeUsers[0]);
-    const result = await User.findByIdAndUpdate(newRoom.activeUsers[0], {rooms: [...userRooms.rooms, createdRoom._id]}, {new: true});
+    newRoom.activeUsers.forEach(async (userId, index) => {
+        const user = await User.findById(userId);
+        if(!user) {return}
+        const result = await User.findByIdAndUpdate(newRoom.activeUsers[0], {rooms: [...user.rooms, roomId]}, {new: true});
+    })
 })
 
+// покинути кімнату
 app.put('/rooms/:roomId', async (req, res) => {
     const {roomId} = req.params;
+    const {userId} = req.body;
     const room = await Room.findById(roomId);
     if(!room) {
         res.json("bad request, wrong room id").status(400);
         return
     };
-    const activeUsers = room.activeUsers.filter(id => id!==req.params);
+    const activeUsers = room.activeUsers.filter(id => id !== userId);
     await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
     if (room.activeUsers.length < 2 && roomId !== '64a99b9d5dca528b9636b96b') {
         await Room.findOneAndRemove({_id: roomId})
-    }
-    const {userId} = req.body;
+    };
     const user = await User.findById(userId);
     if(!user) {
         res.json("bad request, wrong user id").status(400);
         return;
     }
     const newRooms = user.rooms.filter(room => room !== roomId);
-    await User.findByIdAndUpdate(userId, {newRooms}, {new: true});
+    await User.findByIdAndUpdate(userId, {rooms:newRooms}, {new: true});
     res.json('room successfully left').status(201);
+});
+
+// ввійти в існуючу кімнату
+app.patch('/rooms/:roomId', async (req, res) => {
+    const {roomId} = req.params;
+    const {userId} = req.body;
+    let room = await Room.findById(roomId);
+    if(!room) {
+        res.json("bad request, wrong room id").status(400);
+        return
+    };
+    if(!room.activeUsers.includes(roomId)){
+        const activeUsers = [...room.activeUsers, userId];
+        room = await Room.findByIdAndUpdate(roomId, {activeUsers}, {new: true});
+    }
+    const user = await User.findById(userId);
+    if(!user) {
+        res.json("bad request, wrong user id").status(400);
+        return;
+    }
+    const newRooms = [...user.rooms, roomId];
+    await User.findByIdAndUpdate(userId, {rooms:newRooms}, {new: true});
+    res.json(room).status(201);
 });
 
 const server = app.listen(4000);
