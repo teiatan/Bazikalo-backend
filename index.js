@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('./models/User');
+const TypingUser = require('./models/TypingUser');
 const Room = require('./models/Room');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -121,6 +122,10 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
 
+    socket.on("messages", message => {
+        io.emit("messages", message);
+    });
+
     socket.on("userConnect", async (user) => {
         if (user._id === '') {
             return;
@@ -138,10 +143,6 @@ io.on("connection", (socket) => {
         }
         const activeUsers = [...generalRoom.activeUsers, user._id];
         await Room.findByIdAndUpdate('64a99b9d5dca528b9636b96b', { activeUsers }, { new: true });
-    });
-
-    socket.on("messages", message => {
-        io.emit("messages", message);
     });
 
     socket.on("userDisconnect", async (user) => {
@@ -164,15 +165,45 @@ io.on("connection", (socket) => {
         }
     });
 
+    socket.on("startTyping", async (user) => {
+        if (user._id === '') {
+            return;
+        }
+        socket.broadcast.emit('startTyping', user)
+        const userInDataBase = await TypingUser.findById(user._id);
+        if (!userInDataBase) {
+            TypingUser.create(user);
+        } else {
+            TypingUser.findByIdAndUpdate(user._id, user, { new: true });
+        }
+    });
+
+    socket.on("stopTyping", async (user) => {
+        if (user._id === '') {
+            return;
+        }
+        socket.broadcast.emit('stopTyping', user)
+        const userInDataBase = await TypingUser.findById(user._id);
+        if (userInDataBase) {
+            await TypingUser.findByIdAndDelete(userInDataBase._id);
+        }
+    });
+
     User.watch().on('change', async () => {
         const onlineUsers = await User.find();
         io.emit("onlineUsers", onlineUsers);
+    });
+
+    TypingUser.watch().on('change', async () => {
+        const typingUsers = await TypingUser.find();
+        io.emit("typingUsers", typingUsers);
     });
 
     Room.watch().on('change', async () => {
         const allRooms = await Room.find();
         io.emit("allRooms", allRooms);
     });
+
 });
 
 
