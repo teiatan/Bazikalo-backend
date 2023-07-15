@@ -6,9 +6,9 @@ const TypingUserSchema = new mongoose.Schema({
         text: { type: String, default: '#000000' },
         background: { type: String, default: '#ffffff' }
     },
-    rooms: String
+    room: String
 }, { timestamps: true });
 
-const TypingUserModal = mongoose.model('User', TypingUserSchema);
+const TypingUserModal = mongoose.model('TypingUser', TypingUserSchema);
 
 module.exports = TypingUserModal;
