@@ -73,7 +73,7 @@ app.put('/rooms/:roomId', async (req, res) => {
     };
     const activeUsers = room.activeUsers.filter(id => id !== userId);
     await Room.findByIdAndUpdate(roomId, { activeUsers }, { new: true });
-    if (room.activeUsers.length < 2 && roomId !== '64a99b9d5dca528b9636b96b') {
+    if (room.activeUsers.length < 2 && roomId !== '64ceb9912b7260dd6bcd5ae6') {
         await Room.findOneAndRemove({ _id: roomId })
     };
     const user = await User.findById(userId);
@@ -137,12 +137,12 @@ io.on("connection", (socket) => {
         } else {
             User.findByIdAndUpdate(user._id, user, { new: true });
         }
-        const generalRoom = await Room.findById('64a99b9d5dca528b9636b96b');
+        const generalRoom = await Room.findById('64ceb9912b7260dd6bcd5ae6');
         if (generalRoom.activeUsers.includes(user._id)) {
             return;
         }
         const activeUsers = [...generalRoom.activeUsers, user._id];
-        await Room.findByIdAndUpdate('64a99b9d5dca528b9636b96b', { activeUsers }, { new: true });
+        await Room.findByIdAndUpdate('64ceb9912b7260dd6bcd5ae6', { activeUsers }, { new: true });
     });
 
     socket.on("userDisconnect", async (user) => {
@@ -158,7 +158,7 @@ io.on("connection", (socket) => {
                 if (!room) { return };
                 const activeUsers = room.activeUsers.filter(id => id !== user._id);
                 await Room.findByIdAndUpdate(roomId, { activeUsers }, { new: true });
-                if (room.activeUsers.length < 2 && roomId !== '64a99b9d5dca528b9636b96b') {
+                if (room.activeUsers.length < 2 && roomId !== '64ceb9912b7260dd6bcd5ae6') {
                     await Room.findOneAndRemove({ _id: roomId })
                 }
             })
